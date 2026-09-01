@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>捷洋企業 - 管理系統</title>
+  <title>捷洋企業管理系統</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
-  <!-- Tailwind CSS & Lucide Icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
@@ -31,7 +32,7 @@
         <i class="fa-solid fa-cube text-base"></i>
       </div>
       <div>
-        <h1 class="text-sm font-bold tracking-tight" id="txt-app-title">捷暘企業管理系統</h1>
+        <h1 class="text-sm font-bold tracking-tight" id="txt-app-title">捷洋企業管理系統</h1>
         <div class="text-[11px] text-slate-400 font-medium flex items-center gap-1.5" id="user-display">
           <span>系統載入中...</span>
         </div>
@@ -48,20 +49,20 @@
     </div>
   </header>
 
-  <!-- 登入卡片 (未登入時顯示) -->
+  <!-- 登入卡片 -->
   <div id="view-login" class="p-6 max-w-sm mx-auto mt-12">
     <div class="bg-white p-7 rounded-3xl card-shadow border border-slate-200/80 text-center space-y-5">
       <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner">
         <i class="fa-solid fa-shield-halved"></i>
       </div>
       <div>
-        <h2 class="text-lg font-bold text-slate-900">企業身分驗證</h2>
-        <p class="text-xs text-slate-500 mt-1">請使用公司已登記之 Google 帳號授權登入</p>
+        <h2 class="text-lg font-bold text-slate-900">捷洋企業身分驗證</h2>
+        <p class="text-xs text-slate-500 mt-1">請使用公司名冊之 Google 帳號授權登入</p>
       </div>
 
       <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-2xl font-semibold text-xs tracking-wide shadow-md active:scale-98 transition">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
-        <span>使用 Google 帳號安全登入</span>
+        <span>使用 Google 帳號登入</span>
       </button>
 
       <div id="login-error" class="text-xs text-rose-500 bg-rose-50 border border-rose-200 p-3 rounded-xl hidden font-medium text-left"></div>
@@ -89,7 +90,6 @@
 
     <!-- 頁籤一：交辦事項清單 -->
     <div id="tab-tasks" class="space-y-3">
-      <!-- 統計儀表板小卡 -->
       <div class="grid grid-cols-3 gap-2.5" id="stats-container">
         <div class="bg-white p-3 rounded-2xl card-shadow border border-slate-200/60 flex flex-col items-center">
           <span class="text-[11px] text-slate-400 font-medium">總工單</span>
@@ -126,7 +126,7 @@
           <i class="fa-solid fa-bolt-lightning text-amber-500"></i>
           <span>現場作業即時回報</span>
         </h2>
-        <p class="text-xs text-slate-400 mt-0.5">點擊下方模組快速拍照填報，將自動歸檔並推播主管</p>
+        <p class="text-xs text-slate-400 mt-0.5">點擊下方模組拍照填報，將自動歸檔並推播主管</p>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -159,7 +159,6 @@
         </button>
       </div>
 
-      <!-- 主管發起專屬模組 -->
       <div id="manager-create-box" class="hidden pt-1">
         <button onclick="openForm('createtask')" class="w-full bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white p-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-98 transition">
           <i class="fa-solid fa-plus-circle text-sm"></i>
@@ -208,7 +207,7 @@
     </button>
   </nav>
 
-  <!-- 圖片點擊放大 Modal -->
+  <!-- 圖片全螢幕 Lightbox -->
   <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onclick="closeLightbox()">
     <img id="lightbox-img" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain">
   </div>
@@ -249,12 +248,12 @@
 
     const i18n = {
       zh: {
-        appTitle: "捷暘企業管理系統", tasks: "工作交辦清單", forms: "現場作業即時回報", search: "客戶保養紀錄查詢",
+        appTitle: "捷洋企業管理系統", tasks: "工作交辦清單", forms: "現場作業即時回報", search: "客戶保養紀錄查詢",
         cleaning: "集塵板清洗", sewage: "污水設備操作", assembly: "靜電機出機組裝", inventory: "機臺庫存出入庫",
         navTasks: "交辦事項", navForms: "現場回報", navSearch: "保養查詢"
       },
       vi: {
-        appTitle: "HỆ THỐNG QUẢN LÝ JY", tasks: "Danh sách công việc", forms: "Báo cáo hiện trường", search: "Tra cứu bảo dưỡng",
+        appTitle: "HỆ THỐNG JY", tasks: "Danh sách công việc", forms: "Báo cáo hiện trường", search: "Tra cứu bảo dưỡng",
         cleaning: "Rửa tấm lọc bụi", sewage: "Vận hành nước thải", assembly: "Lắp ráp máy tĩnh điện", inventory: "Kho máy vào/ra",
         navTasks: "Giao việc", navForms: "Báo cáo", navSearch: "Tra cứu"
       }
@@ -430,7 +429,6 @@
               statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center gap-1"><i class="fa-solid fa-spinner"></i> 進行中</span>`;
             }
 
-            // 圖片渲染
             let imgHtml = "";
             const rawImg = (t["清單顯示照片"] || t["交派照片1"] || t["照片1"] || "").toString().trim();
             if (rawImg && rawImg.startsWith("http")) {
