@@ -3,137 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>總公司管理系統</title>
+  <title>捷暘企業 - 管理系統</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e3a8a">
+  <meta name="theme-color" content="#0f172a">
+  <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    .hidden { display: none; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+    .glass-nav { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); }
+    .card-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-20 select-none">
+<body class="bg-slate-100 text-slate-800 pb-24 antialiased selection:bg-blue-500 selection:text-white select-none">
 
   <!-- 頂部導覽列 -->
-  <header class="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
-    <div>
-      <h1 class="text-lg font-bold" id="txt-app-title">總公司管理系統</h1>
-      <div class="text-xs text-blue-200 flex items-center gap-1.5 mt-0.5">
-        <span id="user-display">未登入</span>
+  <header class="glass-nav text-white px-4 py-3.5 sticky top-0 z-40 border-b border-slate-800/80 shadow-sm flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-md shadow-blue-500/20">
+        <i class="fa-solid fa-cube text-base"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-tight" id="txt-app-title">捷暘企業管理系統</h1>
+        <div class="text-[11px] text-slate-400 font-medium flex items-center gap-1.5" id="user-display">
+          <span>系統載入中...</span>
+        </div>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <button onclick="toggleLanguage()" class="bg-blue-800 hover:bg-blue-700 text-xs px-2.5 py-1.5 rounded-lg border border-blue-600 transition font-medium" id="lang-btn">
-        🇻🇳 Tiếng Việt
+      <button onclick="toggleLanguage()" class="bg-slate-800/90 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5 font-semibold" id="lang-btn">
+        <i class="fa-solid fa-earth-americas text-[11px]"></i>
+        <span>Tiếng Việt</span>
       </button>
-      <button onclick="logout()" class="text-xs bg-red-600 px-2.5 py-1.5 rounded-lg font-bold">登出</button>
+      <button onclick="logout()" class="text-slate-400 hover:text-red-400 p-1.5 text-xs transition">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      </button>
     </div>
   </header>
 
-  <!-- 登入畫面 -->
-  <div id="view-login" class="p-6 max-w-md mx-auto mt-6">
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center space-y-4">
-      <div class="w-16 h-16 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">🏢</div>
-      <h2 class="text-xl font-bold">公司系統登入</h2>
-      <p class="text-xs text-gray-500">請使用已登記於公司名冊的 Google 帳號登入</p>
-      
-      <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 py-3 rounded-xl font-bold text-sm text-gray-700 shadow-sm active:bg-gray-50">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-        <span>使用 Google 帳號登入</span>
+  <!-- 登入卡片 (未登入時顯示) -->
+  <div id="view-login" class="p-6 max-w-sm mx-auto mt-12">
+    <div class="bg-white p-7 rounded-3xl card-shadow border border-slate-200/80 text-center space-y-5">
+      <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">企業身分驗證</h2>
+        <p class="text-xs text-slate-500 mt-1">請使用公司已登記之 Google 帳號授權登入</p>
+      </div>
+
+      <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-2xl font-semibold text-xs tracking-wide shadow-md active:scale-98 transition">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4">
+        <span>使用 Google 帳號安全登入</span>
       </button>
 
-      <div id="login-error" class="text-xs text-red-500 font-bold hidden"></div>
+      <div id="login-error" class="text-xs text-rose-500 bg-rose-50 border border-rose-200 p-3 rounded-xl hidden font-medium text-left"></div>
     </div>
   </div>
 
-  <!-- 主要內容區 -->
-  <main id="main-content" class="hidden p-4 max-w-lg mx-auto space-y-3">
+  <!-- 主內容視圖 -->
+  <main id="main-content" class="hidden p-4 max-w-md mx-auto space-y-4">
 
-    <!-- 啟用推播通知按鈕橫幅 (若尚未註冊 Token 則顯示) -->
-    <div id="push-notice-banner" class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-center justify-between shadow-sm">
-      <div class="text-xs text-amber-800">
-        <div class="font-bold">🔔 尚未啟用手機推播</div>
-        <div>點擊右側按鈕即可接收工單響鈴</div>
+    <!-- 推播通知啟用橫幅 -->
+    <div id="push-notice-banner" class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200/80 p-3.5 rounded-2xl flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-sm">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div class="text-xs text-amber-900">
+          <div class="font-bold">尚未啟用手機推播</div>
+          <div class="text-[11px] text-amber-700">點擊啟用以接收工單響鈴</div>
+        </div>
       </div>
-      <button onclick="requestPushPermissionManually()" class="bg-amber-600 active:bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold">
-        啟用通知
+      <button onclick="requestPushPermissionManually()" class="bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs px-3 py-1.5 rounded-xl font-bold transition shadow-sm">
+        啟用
       </button>
     </div>
 
-    <!-- 頁籤一：交辦事項 -->
+    <!-- 頁籤一：交辦事項清單 -->
     <div id="tab-tasks" class="space-y-3">
-      <div class="flex justify-between items-center mb-1">
-        <h2 class="font-bold text-gray-700 text-base" id="txt-tasks-title">📌 我的交辦事項</h2>
-        <button onclick="loadTasks()" class="text-xs text-blue-800 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">🔄 重新整理</button>
+      <!-- 統計儀表板小卡 -->
+      <div class="grid grid-cols-3 gap-2.5" id="stats-container">
+        <div class="bg-white p-3 rounded-2xl card-shadow border border-slate-200/60 flex flex-col items-center">
+          <span class="text-[11px] text-slate-400 font-medium">總工單</span>
+          <span class="text-lg font-bold text-slate-800 mt-0.5" id="stat-total">0</span>
+        </div>
+        <div class="bg-white p-3 rounded-2xl card-shadow border border-slate-200/60 flex flex-col items-center">
+          <span class="text-[11px] text-blue-500 font-medium">進行中</span>
+          <span class="text-lg font-bold text-blue-600 mt-0.5" id="stat-pending">0</span>
+        </div>
+        <div class="bg-white p-3 rounded-2xl card-shadow border border-slate-200/60 flex flex-col items-center">
+          <span class="text-[11px] text-emerald-500 font-medium">已完成</span>
+          <span class="text-lg font-bold text-emerald-600 mt-0.5" id="stat-completed">0</span>
+        </div>
       </div>
+
+      <div class="flex justify-between items-center pt-1 px-1">
+        <h2 class="font-bold text-slate-900 text-sm flex items-center gap-1.5" id="txt-tasks-title">
+          <i class="fa-solid fa-list-check text-blue-600"></i>
+          <span>工作交辦清單</span>
+        </h2>
+        <button onclick="loadTasks()" class="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1 font-semibold py-1 px-2 rounded-lg active:bg-slate-200/60 transition">
+          <i class="fa-solid fa-rotate-right text-[11px]"></i>
+          <span>重新整理</span>
+        </button>
+      </div>
+
       <div id="tasks-container" class="space-y-3"></div>
     </div>
 
-    <!-- 頁籤二：現場填報 -->
+    <!-- 頁籤二：現場作業填報 -->
     <div id="tab-forms" class="hidden space-y-4">
-      <h2 class="font-bold text-gray-700 text-base" id="txt-forms-title">⚡ 現場作業回報</h2>
+      <div class="px-1">
+        <h2 class="font-bold text-slate-900 text-sm flex items-center gap-1.5" id="txt-forms-title">
+          <i class="fa-solid fa-bolt-lightning text-amber-500"></i>
+          <span>現場作業即時回報</span>
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">點擊下方模組快速拍照填報，將自動歸檔並推播主管</p>
+      </div>
+
       <div class="grid grid-cols-2 gap-3">
-        <button onclick="openForm('cleaning')" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center gap-2 active:bg-gray-50">
-          <span class="text-3xl">🧼</span><span class="font-bold text-sm" id="btn-cleaning">集塵板清洗</span>
+        <button onclick="openForm('cleaning')" class="bg-white p-4 rounded-2xl card-shadow border border-slate-200/70 hover:border-blue-400 active:scale-97 transition flex flex-col items-center gap-2.5 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl shadow-inner">
+            <i class="fa-solid fa-soap"></i>
+          </div>
+          <span class="font-bold text-xs text-slate-800" id="btn-cleaning">集塵板清洗</span>
         </button>
-        <button onclick="openForm('sewage')" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center gap-2 active:bg-gray-50">
-          <span class="text-3xl">🚰</span><span class="font-bold text-sm" id="btn-sewage">污水設備操作</span>
+
+        <button onclick="openForm('sewage')" class="bg-white p-4 rounded-2xl card-shadow border border-slate-200/70 hover:border-blue-400 active:scale-97 transition flex flex-col items-center gap-2.5 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl shadow-inner">
+            <i class="fa-solid fa-faucet-drip"></i>
+          </div>
+          <span class="font-bold text-xs text-slate-800" id="btn-sewage">污水設備操作</span>
         </button>
-        <button onclick="openForm('assembly')" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center gap-2 active:bg-gray-50">
-          <span class="text-3xl">⚙️</span><span class="font-bold text-sm" id="btn-assembly">靜電機出機組裝</span>
+
+        <button onclick="openForm('assembly')" class="bg-white p-4 rounded-2xl card-shadow border border-slate-200/70 hover:border-blue-400 active:scale-97 transition flex flex-col items-center gap-2.5 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shadow-inner">
+            <i class="fa-solid fa-gears"></i>
+          </div>
+          <span class="font-bold text-xs text-slate-800" id="btn-assembly">靜電機出機組裝</span>
         </button>
-        <button onclick="openForm('inventory')" class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center gap-2 active:bg-gray-50">
-          <span class="text-3xl">📦</span><span class="font-bold text-sm" id="btn-inventory">機臺庫存出入庫</span>
+
+        <button onclick="openForm('inventory')" class="bg-white p-4 rounded-2xl card-shadow border border-slate-200/70 hover:border-blue-400 active:scale-97 transition flex flex-col items-center gap-2.5 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <span class="font-bold text-xs text-slate-800" id="btn-inventory">機臺庫存出入庫</span>
         </button>
       </div>
 
-      <div id="manager-create-box" class="hidden pt-2">
-        <button onclick="openForm('createtask')" class="w-full bg-amber-600 text-white p-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow">
-          <span>📝</span> <span>發起新交辦事項 (主管專用)</span>
+      <!-- 主管發起專屬模組 -->
+      <div id="manager-create-box" class="hidden pt-1">
+        <button onclick="openForm('createtask')" class="w-full bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white p-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-98 transition">
+          <i class="fa-solid fa-plus-circle text-sm"></i>
+          <span>發起新工作交辦 (主管專用)</span>
         </button>
       </div>
     </div>
 
-    <!-- 頁籤三：保養查詢 -->
+    <!-- 頁籤三：客戶保養歷史查詢 -->
     <div id="tab-search" class="hidden space-y-3">
-      <h2 class="font-bold text-gray-700 text-base" id="txt-search-title">🔍 客戶保養紀錄查詢</h2>
-      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+      <div class="px-1">
+        <h2 class="font-bold text-slate-900 text-sm flex items-center gap-1.5" id="txt-search-title">
+          <i class="fa-solid fa-magnifying-glass text-blue-600"></i>
+          <span>客戶保養紀錄查詢</span>
+        </h2>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl card-shadow border border-slate-200/70 space-y-3">
         <div class="flex gap-2">
-          <input type="text" id="search-cust-id" placeholder="請輸入客戶編號 (如 A05233)" class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm uppercase">
-          <button onclick="searchMaintenance()" class="bg-blue-900 text-white px-4 rounded-lg font-bold text-sm">查詢</button>
+          <div class="relative flex-1">
+            <i class="fa-solid fa-building text-slate-400 absolute left-3 top-3.5 text-xs"></i>
+            <input type="text" id="search-cust-id" placeholder="輸入客戶編號 (如 A05233)" class="w-full pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <button onclick="searchMaintenance()" class="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white px-4 rounded-xl font-bold text-xs transition">
+            查詢
+          </button>
         </div>
-        <div id="search-results" class="space-y-2.5 pt-2"></div>
+        <div id="search-results" class="space-y-2.5 pt-1"></div>
       </div>
     </div>
   </main>
 
   <!-- 底部固定導覽列 -->
-  <nav id="bottom-nav" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-2 z-40">
-    <button onclick="switchTab('tasks')" id="nav-tasks" class="flex flex-col items-center text-blue-900 font-bold text-xs py-1">
-      <span class="text-xl">📋</span><span id="txt-nav-tasks">交辦事項</span>
+  <nav id="bottom-nav" class="hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 flex justify-around py-2 z-40 shadow-lg">
+    <button onclick="switchTab('tasks')" id="nav-tasks" class="flex flex-col items-center text-blue-600 font-bold text-[11px] py-1 transition">
+      <i class="fa-solid fa-rectangle-list text-base mb-1"></i>
+      <span id="txt-nav-tasks">交辦事項</span>
     </button>
-    <button onclick="switchTab('forms')" id="nav-forms" class="flex flex-col items-center text-gray-400 text-xs py-1">
-      <span class="text-xl">📝</span><span id="txt-nav-forms">現場回報</span>
+    <button onclick="switchTab('forms')" id="nav-forms" class="flex flex-col items-center text-slate-400 font-medium text-[11px] py-1 transition">
+      <i class="fa-solid fa-pen-to-square text-base mb-1"></i>
+      <span id="txt-nav-forms">現場回報</span>
     </button>
-    <button onclick="switchTab('search')" id="nav-search" class="flex flex-col items-center text-gray-400 text-xs py-1">
-      <span class="text-xl">🔍</span><span id="txt-nav-search">保養查詢</span>
+    <button onclick="switchTab('search')" id="nav-search" class="flex flex-col items-center text-slate-400 font-medium text-[11px] py-1 transition">
+      <i class="fa-solid fa-circle-question text-base mb-1"></i>
+      <span id="txt-nav-search">保養查詢</span>
     </button>
   </nav>
 
-  <!-- 通用 Modal 表單 -->
-  <div id="form-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center">
-    <div class="bg-white w-full max-w-lg max-h-[90vh] rounded-t-2xl sm:rounded-2xl p-5 overflow-y-auto space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 id="modal-title" class="font-bold text-base text-gray-800">表單填報</h3>
-        <button onclick="closeFormModal()" class="text-gray-400 text-2xl">&times;</button>
+  <!-- 圖片點擊放大 Modal -->
+  <div id="image-lightbox" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onclick="closeLightbox()">
+    <img id="lightbox-img" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain">
+  </div>
+
+  <!-- 通用填報 Modal -->
+  <div id="form-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md max-h-[90vh] rounded-t-3xl sm:rounded-3xl p-5 overflow-y-auto space-y-4 card-shadow">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="modal-title" class="font-bold text-sm text-slate-900">表單填報</h3>
+        <button onclick="closeFormModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm">&times;</button>
       </div>
-      <div id="modal-form-content" class="space-y-3"></div>
-      <div class="pt-2 flex gap-2">
-        <button onclick="closeFormModal()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-sm">取消</button>
-        <button onclick="submitCurrentForm()" id="btn-submit-form" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold text-sm">確認送出</button>
+      <div id="modal-form-content" class="space-y-3.5"></div>
+      <div class="pt-2 flex gap-2.5">
+        <button onclick="closeFormModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold text-xs transition">取消</button>
+        <button onclick="submitCurrentForm()" id="btn-submit-form" class="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white py-3 rounded-xl font-bold text-xs shadow-md shadow-blue-500/20 transition">確認送出</button>
       </div>
     </div>
   </div>
@@ -159,13 +249,13 @@
 
     const i18n = {
       zh: {
-        appTitle: "總公司管理系統", tasks: "我的交辦事項", forms: "現場作業回報", search: "客戶保養紀錄查詢",
-        cleaning: "集塵板清洗回報", sewage: "污水設備操作", assembly: "靜電機出機組裝", inventory: "機臺庫存出入庫",
+        appTitle: "捷暘企業管理系統", tasks: "工作交辦清單", forms: "現場作業即時回報", search: "客戶保養紀錄查詢",
+        cleaning: "集塵板清洗", sewage: "污水設備操作", assembly: "靜電機出機組裝", inventory: "機臺庫存出入庫",
         navTasks: "交辦事項", navForms: "現場回報", navSearch: "保養查詢"
       },
       vi: {
-        appTitle: "HỆ THỐNG CÔNG TY", tasks: "Công việc được giao", forms: "Báo cáo hiện trường", search: "Tra cứu bảo dưỡng",
-        cleaning: "Rửa tấm lọc bụi", sewage: "Xử lý nước thải", assembly: "Lắp ráp máy tĩnh điện", inventory: "Kho máy vào/ra",
+        appTitle: "HỆ THỐNG QUẢN LÝ JY", tasks: "Danh sách công việc", forms: "Báo cáo hiện trường", search: "Tra cứu bảo dưỡng",
+        cleaning: "Rửa tấm lọc bụi", sewage: "Vận hành nước thải", assembly: "Lắp ráp máy tĩnh điện", inventory: "Kho máy vào/ra",
         navTasks: "Giao việc", navForms: "Báo cáo", navSearch: "Tra cứu"
       }
     };
@@ -180,10 +270,8 @@
       if ("serviceWorker" in navigator) {
         try {
           swRegistration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
-          if (firebase.messaging.isSupported()) {
-            messaging = firebase.messaging();
-          }
-        } catch (e) { console.error("SW 註冊錯誤:", e); }
+          if (firebase.messaging.isSupported()) messaging = firebase.messaging();
+        } catch (e) { console.error("SW Register Error:", e); }
       }
       await fetchEmployees();
       if (currentUser) showMainApp();
@@ -199,9 +287,9 @@
     function applyLanguage() {
       const t = i18n[currentLang];
       document.getElementById("txt-app-title").innerText = t.appTitle;
-      document.getElementById("txt-tasks-title").innerText = "📌 " + t.tasks;
-      document.getElementById("txt-forms-title").innerText = "⚡ " + t.forms;
-      document.getElementById("txt-search-title").innerText = "🔍 " + t.search;
+      document.getElementById("txt-tasks-title").innerHTML = `<i class="fa-solid fa-list-check text-blue-600"></i> <span>${t.tasks}</span>`;
+      document.getElementById("txt-forms-title").innerHTML = `<i class="fa-solid fa-bolt-lightning text-amber-500"></i> <span>${t.forms}</span>`;
+      document.getElementById("txt-search-title").innerHTML = `<i class="fa-solid fa-magnifying-glass text-blue-600"></i> <span>${t.search}</span>`;
       document.getElementById("btn-cleaning").innerText = t.cleaning;
       document.getElementById("btn-sewage").innerText = t.sewage;
       document.getElementById("btn-assembly").innerText = t.assembly;
@@ -209,17 +297,15 @@
       document.getElementById("txt-nav-tasks").innerText = t.navTasks;
       document.getElementById("txt-nav-forms").innerText = t.navForms;
       document.getElementById("txt-nav-search").innerText = t.navSearch;
-      document.getElementById("lang-btn").innerText = currentLang === "zh" ? "🇻🇳 Tiếng Việt" : "🇹🇼 繁體中文";
+      document.getElementById("lang-btn").innerHTML = currentLang === "zh" ? `<i class="fa-solid fa-earth-americas text-[11px]"></i> <span>Tiếng Việt</span>` : `<i class="fa-solid fa-earth-americas text-[11px]"></i> <span>繁體中文</span>`;
     }
 
     async function fetchEmployees() {
       try {
         const res = await fetch(`${GAS_API_URL}?action=getEmployees`);
         const json = await res.json();
-        if (json.status === "success") {
-          employeeList = json.data;
-        }
-      } catch (err) { console.error("員工名單載入失敗", err); }
+        if (json.status === "success") employeeList = json.data;
+      } catch (err) { console.error("Fetch employees failed", err); }
     }
 
     async function loginWithGoogle() {
@@ -236,7 +322,7 @@
         const matched = employeeList.find(e => (e["電郵Email"] || "").toLowerCase().trim() === email);
 
         if (!matched) {
-          errBox.innerText = `登入失敗：此 Google 帳號 (${email}) 未登記在公司員工名單中。`;
+          errBox.innerText = `登入拒絕：帳號 (${email}) 未登記在員工名冊中。`;
           errBox.classList.remove("hidden");
           auth.signOut();
           return;
@@ -246,7 +332,7 @@
         localStorage.setItem("app_user", JSON.stringify(currentUser));
         showMainApp();
       } catch (err) {
-        errBox.innerText = "登入失敗：" + err.message;
+        errBox.innerText = "登入錯誤：" + err.message;
         errBox.classList.remove("hidden");
       }
     }
@@ -257,13 +343,16 @@
       document.getElementById("bottom-nav").classList.remove("hidden");
 
       const name = (currentLang === "vi" && currentUser["員工姓名(越)"]) ? currentUser["員工姓名(越)"] : currentUser["員工姓名"];
-      document.getElementById("user-display").innerText = `👤 ${currentUser["員工編號Employee_ID"]} ${name} (${currentUser["職務"]})`;
+      document.getElementById("user-display").innerHTML = `
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>${currentUser["員工編號Employee_ID"]} ${name}</span>
+        <span class="text-slate-500">(${currentUser["職務"]})</span>
+      `;
 
       if (currentUser["職務"] === "主管" || currentUser["員工編號Employee_ID"] === "J001") {
         document.getElementById("manager-create-box").classList.remove("hidden");
       }
 
-      // 若已有 Token 則隱藏啟用橫幅
       if (currentUser["FCM_Token"]) {
         document.getElementById("push-notice-banner").classList.add("hidden");
       }
@@ -272,7 +361,7 @@
     }
 
     function logout() {
-      if (confirm("確定要登出嗎？")) {
+      if (confirm("確定要登出系統嗎？")) {
         auth.signOut();
         localStorage.removeItem("app_user");
         currentUser = null;
@@ -281,44 +370,41 @@
     }
 
     async function requestPushPermissionManually() {
-      if (!messaging || !swRegistration) {
-        return alert("此手機環境尚未就緒，請先確認使用 Chrome / Safari 開啟。");
-      }
+      if (!messaging || !swRegistration) return alert("手機環境不支援推播通知。");
       try {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
-          const token = await messaging.getToken({
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: swRegistration
-          });
+          const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration });
           if (token) {
             document.getElementById("push-notice-banner").classList.add("hidden");
             await fetch(GAS_API_URL, {
               method: "POST",
               body: JSON.stringify({ action: "updateToken", empId: currentUser["員工編號Employee_ID"], token: token })
             });
-            alert("🎉 推播通知啟用成功！此手機已綁定系統工單聲響。");
+            alert("推播通知已啟用！");
           }
-        } else {
-          alert("您已封鎖通知權限，請至手機設定中允許瀏覽器發送通知。");
         }
-      } catch (err) {
-        alert("啟用推播失敗: " + err.message);
-      }
+      } catch (err) { alert("啟用失敗: " + err.message); }
     }
 
     function switchTab(tab) {
       ["tasks", "forms", "search"].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add("hidden");
-        document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-gray-400 text-xs py-1";
+        document.getElementById(`nav-${t}`).className = "flex flex-col items-center text-slate-400 font-medium text-[11px] py-1 transition";
       });
       document.getElementById(`tab-${tab}`).classList.remove("hidden");
-      document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-blue-900 font-bold text-xs py-1";
+      document.getElementById(`nav-${tab}`).className = "flex flex-col items-center text-blue-600 font-bold text-[11px] py-1 transition";
     }
 
     async function loadTasks() {
       const container = document.getElementById("tasks-container");
-      container.innerHTML = `<div class="text-center py-6 text-sm text-gray-400">載入中...</div>`;
+      container.innerHTML = `
+        <div class="text-center py-12 text-slate-400 text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin text-lg mb-2 text-blue-500"></i>
+          <div>載入最新工單中...</div>
+        </div>
+      `;
+
       try {
         const isMgr = currentUser["職務"] === "主管" || currentUser["員工編號Employee_ID"] === "J001";
         const res = await fetch(`${GAS_API_URL}?action=getTasks&empId=${currentUser["員工編號Employee_ID"]}&isManager=${isMgr}`);
@@ -326,36 +412,64 @@
 
         if (json.status === "success" && json.data.length > 0) {
           container.innerHTML = "";
+          let total = json.data.length, pending = 0, completed = 0;
+
           json.data.forEach(t => {
+            if (t["工作狀態"] === "已完成") completed++;
+            else pending++;
+
             const isVi = currentLang === "vi";
             const taskContent = isVi && t["工作內容(越)"] ? t["工作內容(越)"] : t["工作內容(中)"];
-            const statusColor = t["工作狀態"] === "已完成" ? "bg-green-100 text-green-700" : (t["工作狀態"] === "待主管審核" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700");
+            
+            let statusBadge = "";
+            if (t["工作狀態"] === "已完成") {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200/80 flex items-center gap-1"><i class="fa-solid fa-check"></i> 已完成</span>`;
+            } else if (t["工作狀態"] === "待主管審核") {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center gap-1"><i class="fa-solid fa-clock"></i> 待審核</span>`;
+            } else {
+              statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center gap-1"><i class="fa-solid fa-spinner"></i> 進行中</span>`;
+            }
 
+            // 圖片渲染
             let imgHtml = "";
             const rawImg = (t["清單顯示照片"] || t["交派照片1"] || t["照片1"] || "").toString().trim();
-            if (rawImg && (rawImg.startsWith("http://") || rawImg.startsWith("https://") || rawImg.startsWith("data:image"))) {
-              imgHtml = `<img src="${rawImg}" class="w-full h-40 object-cover rounded-lg mt-2 border">`;
+            if (rawImg && rawImg.startsWith("http")) {
+              imgHtml = `
+                <div class="mt-2.5 relative rounded-2xl overflow-hidden border border-slate-200/80 bg-slate-50 group">
+                  <img src="${rawImg}" class="w-full h-44 object-cover cursor-pointer transition hover:scale-105" onclick="openLightbox('${rawImg}')">
+                  <div class="absolute bottom-2 right-2 bg-slate-900/70 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-[10px] flex items-center gap-1 pointer-events-none">
+                    <i class="fa-solid fa-expand text-[9px]"></i> 點擊放大
+                  </div>
+                </div>
+              `;
             }
 
             let card = `
-              <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-2.5">
-                <div class="flex justify-between items-start">
-                  <span class="text-xs px-2 py-0.5 rounded-full font-bold ${statusColor}">${t["工作狀態"]}</span>
-                  <span class="text-[11px] text-gray-400">${t["Date"]}</span>
+              <div class="bg-white p-4 rounded-3xl card-shadow border border-slate-200/60 space-y-3">
+                <div class="flex justify-between items-center">
+                  ${statusBadge}
+                  <span class="text-[11px] text-slate-400 font-medium">${t["Date"]}</span>
                 </div>
-                <div class="text-sm font-bold text-gray-800">${taskContent}</div>
-                <div class="text-xs text-gray-500 flex justify-between">
-                  <span>指派：${t["指派人"]} ➔ ${t["被指派人"]}</span>
-                  ${t["完成期限"] ? `<span class="text-red-500 font-medium">期限: ${t["完成期限"]}</span>` : ""}
+
+                <div class="text-sm font-bold text-slate-900 leading-snug">${taskContent}</div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+                  <div class="flex items-center gap-1.5">
+                    <span class="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px]">${t["指派人"]}</span>
+                    <i class="fa-solid fa-arrow-right text-[9px] text-slate-300"></i>
+                    <span class="px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px]">${t["被指派人"]}</span>
+                  </div>
+                  ${t["完成期限"] ? `<span class="text-rose-500 font-semibold text-[11px]"><i class="fa-regular fa-clock"></i> ${t["完成期限"]}</span>` : ""}
                 </div>
+
                 ${imgHtml}
             `;
 
             if (t["被指派人"] === currentUser["員工編號Employee_ID"] && t["工作狀態"] === "進行中") {
               card += `
-                <div class="pt-2 border-t mt-2 flex gap-2">
-                  <button onclick="openWorkerReportModal('${t["Task_ID"]}')" class="w-full bg-blue-900 text-white py-2 rounded-lg text-xs font-bold">
-                    📷 拍照並回報完成
+                <div class="pt-2 border-t border-slate-100 mt-2">
+                  <button onclick="openWorkerReportModal('${t["Task_ID"]}')" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-98 text-white py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-camera"></i> 拍照並回報完成
                   </button>
                 </div>
               `;
@@ -363,9 +477,13 @@
 
             if (isMgr && t["工作狀態"] === "待主管審核") {
               card += `
-                <div class="pt-2 border-t mt-2 flex gap-2">
-                  <button onclick="reviewTask('${t["Task_ID"]}', '已核准')" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-xs font-bold">✔ 核准通過</button>
-                  <button onclick="reviewTask('${t["Task_ID"]}', '退回重做')" class="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-bold">✖ 退回重做</button>
+                <div class="pt-2 border-t border-slate-100 mt-2 flex gap-2">
+                  <button onclick="reviewTask('${t["Task_ID"]}', '已核准')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-check"></i> 核准
+                  </button>
+                  <button onclick="reviewTask('${t["Task_ID"]}', '退回重做')" class="flex-1 bg-rose-50 hover:bg-rose-100 active:scale-98 text-rose-600 border border-rose-200 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-rotate-left"></i> 退回
+                  </button>
                 </div>
               `;
             }
@@ -373,12 +491,30 @@
             card += `</div>`;
             container.innerHTML += card;
           });
+
+          document.getElementById("stat-total").innerText = total;
+          document.getElementById("stat-pending").innerText = pending;
+          document.getElementById("stat-completed").innerText = completed;
         } else {
-          container.innerHTML = `<div class="text-center py-8 text-sm text-gray-400">目前沒有交辦工單</div>`;
+          container.innerHTML = `
+            <div class="bg-white p-8 rounded-3xl card-shadow border border-slate-200/60 text-center text-slate-400 text-xs">
+              <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-300"></i>
+              <div>目前無任何待處理交辦事項</div>
+            </div>
+          `;
         }
       } catch (e) {
-        container.innerHTML = `<div class="text-center py-8 text-sm text-red-400">載入失敗，請重新整理</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-xs text-rose-500">載入失敗，請點選重新整理</div>`;
       }
+    }
+
+    function openLightbox(url) {
+      document.getElementById("lightbox-img").src = url;
+      document.getElementById("image-lightbox").classList.remove("hidden");
+    }
+
+    function closeLightbox() {
+      document.getElementById("image-lightbox").classList.add("hidden");
     }
 
     function openForm(type) {
@@ -389,26 +525,26 @@
       modal.classList.remove("hidden");
 
       if (type === "cleaning") {
-        title.innerText = "🧼 集塵板清洗回報";
+        title.innerHTML = `<i class="fa-solid fa-soap text-cyan-600 mr-1.5"></i> 集塵板清洗回報`;
         content.innerHTML = `
-          <div><label class="text-xs text-gray-500 font-bold">集塵板/濾網型號</label><input type="text" id="f-model" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="例如: 32S / SE / 濾網"></div>
-          <div><label class="text-xs text-gray-500 font-bold">數量</label><input type="number" id="f-qty" class="w-full p-2 border rounded-lg text-sm mt-1" value="1"></div>
-          <div><label class="text-xs text-gray-500 font-bold">現場拍照 (最多3張)</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1 text-xs mt-1"></div>
-          <div><label class="text-xs text-gray-500 font-bold">備註說明</label><input type="text" id="f-note" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">型號</label><input type="text" id="f-model" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="例如: 32S / SE / 濾網"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">數量</label><input type="number" id="f-qty" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" value="1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">現場照片</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1.5 text-xs mt-1 border border-slate-200 rounded-xl bg-slate-50"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">備註</label><input type="text" id="f-note" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1"></div>
         `;
       } else if (type === "sewage") {
-        title.innerText = "🚰 污水設備操作記錄";
+        title.innerHTML = `<i class="fa-solid fa-faucet-drip text-teal-600 mr-1.5"></i> 污水設備操作記錄`;
         content.innerHTML = `
-          <div><label class="text-xs text-gray-500 font-bold">操作紀錄</label>
-            <select id="f-optype" class="w-full p-2 border rounded-lg text-sm mt-1">
+          <div><label class="text-[11px] text-slate-500 font-bold">操作紀錄</label>
+            <select id="f-optype" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold">
               <option value="設備巡檢(開啟.關閉)">設備巡檢(開啟.關閉)</option>
               <option value="加藥操作">加藥操作</option>
               <option value="定期保養">定期保養</option>
               <option value="廢土清運">廢土清運</option>
             </select>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold">操作設備</label>
-            <select id="f-equip" class="w-full p-2 border rounded-lg text-sm mt-1">
+          <div><label class="text-[11px] text-slate-500 font-bold">操作設備</label>
+            <select id="f-equip" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold">
               <option value="電控箱">電控箱</option>
               <option value="快速沉澱槽">快速沉澱槽</option>
               <option value="壓濾汙泥機">壓濾汙泥機</option>
@@ -419,56 +555,56 @@
               <option value="稀硫酸">稀硫酸</option>
             </select>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold">回報說明</label><input type="text" id="f-desc" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="例如: 運作正常 / 1公噸"></div>
-          <div><label class="text-xs text-gray-500 font-bold">現場拍照</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1 text-xs mt-1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">回報說明</label><input type="text" id="f-desc" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="例如: 運作正常 / 1公噸"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">現場照片</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1.5 text-xs mt-1 border border-slate-200 rounded-xl bg-slate-50"></div>
         `;
       } else if (type === "assembly") {
-        title.innerText = "⚙️ 靜電機出機組裝";
+        title.innerHTML = `<i class="fa-solid fa-gears text-indigo-600 mr-1.5"></i> 靜電機出機組裝`;
         content.innerHTML = `
-          <div><label class="text-xs text-gray-500 font-bold">機臺型號</label><input type="text" id="f-model" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="例如: PE-40H / P1-2KA"></div>
-          <div><label class="text-xs text-gray-500 font-bold">產品保固編號</label><input type="text" id="f-warranty" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="例如: JY20260765"></div>
-          <div><label class="text-xs text-gray-500 font-bold">客戶編號名稱</label><input type="text" id="f-cust" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="例如: C00104"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">機臺型號</label><input type="text" id="f-model" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="例如: PE-40H / P1-2KA"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">保固編號</label><input type="text" id="f-warranty" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="例如: JY20260765"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">客戶編號</label><input type="text" id="f-cust" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="例如: C00104"></div>
           <div class="grid grid-cols-2 gap-2">
-            <div><label class="text-xs text-gray-500 font-bold">風口進出</label><input type="text" id="f-vent" class="w-full p-2 border rounded-lg text-sm mt-1" value="左進"></div>
-            <div><label class="text-xs text-gray-500 font-bold">適用電壓</label><input type="text" id="f-volt" class="w-full p-2 border rounded-lg text-sm mt-1" value="220V"></div>
+            <div><label class="text-[11px] text-slate-500 font-bold">風口</label><input type="text" id="f-vent" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" value="左進"></div>
+            <div><label class="text-[11px] text-slate-500 font-bold">電壓</label><input type="text" id="f-volt" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" value="220V"></div>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold">組裝照片</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1 text-xs mt-1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">組裝照片</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1.5 text-xs mt-1 border border-slate-200 rounded-xl bg-slate-50"></div>
         `;
       } else if (type === "inventory") {
-        title.innerText = "📦 機臺庫存出入庫";
+        title.innerHTML = `<i class="fa-solid fa-boxes-stacked text-amber-600 mr-1.5"></i> 機臺庫存出入庫`;
         content.innerHTML = `
-          <div><label class="text-xs text-gray-500 font-bold">出入庫類別</label>
-            <select id="f-inv-type" class="w-full p-2 border rounded-lg text-sm mt-1">
+          <div><label class="text-[11px] text-slate-500 font-bold">類別</label>
+            <select id="f-inv-type" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold">
               <option value="入庫">入庫</option>
               <option value="出庫">出庫</option>
               <option value="移庫/盤點">移庫/盤點</option>
             </select>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold">產品條碼/型號</label><input type="text" id="f-barcode" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="請輸入型號或條碼"></div>
-          <div><label class="text-xs text-gray-500 font-bold">數量</label><input type="number" id="f-qty" class="w-full p-2 border rounded-lg text-sm mt-1" value="1"></div>
-          <div><label class="text-xs text-gray-500 font-bold">存放位置</label><input type="text" id="f-loc" class="w-full p-2 border rounded-lg text-sm mt-1" value="A-01-01"></div>
-          <div><label class="text-xs text-gray-500 font-bold">拍照存證</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1 text-xs mt-1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">產品型號/條碼</label><input type="text" id="f-barcode" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">數量</label><input type="number" id="f-qty" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" value="1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">存放位置</label><input type="text" id="f-loc" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" value="A-01-01"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">照片存證</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1.5 text-xs mt-1 border border-slate-200 rounded-xl bg-slate-50"></div>
         `;
       } else if (type === "createtask") {
-        title.innerText = "📝 發起新交辦事項";
+        title.innerHTML = `<i class="fa-solid fa-plus-circle text-blue-600 mr-1.5"></i> 發起新交辦事項`;
         let optUsers = "";
         employeeList.forEach(e => optUsers += `<option value="${e["員工編號Employee_ID"]}">${e["員工編號Employee_ID"]} - ${e["員工姓名"]}</option>`);
         content.innerHTML = `
-          <div><label class="text-xs text-gray-500 font-bold">指派部門</label>
-            <select id="f-dept" class="w-full p-2 border rounded-lg text-sm mt-1">
+          <div><label class="text-[11px] text-slate-500 font-bold">指派部門</label>
+            <select id="f-dept" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold">
               <option value="廠務">廠務</option>
               <option value="保修">保修</option>
               <option value="行政">行政</option>
               <option value="總公司">總公司</option>
             </select>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold">被指派同仁</label>
-            <select id="f-assignee" class="w-full p-2 border rounded-lg text-sm mt-1">${optUsers}</select>
+          <div><label class="text-[11px] text-slate-500 font-bold">被指派同仁</label>
+            <select id="f-assignee" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold">${optUsers}</select>
           </div>
-          <div><label class="text-xs text-gray-500 font-bold">工作內容 (中文)</label><textarea id="f-taskzh" rows="2" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="輸入交辦事項內容..."></textarea></div>
-          <div><label class="text-xs text-gray-500 font-bold">工作內容 (越文，選填)</label><textarea id="f-taskvi" rows="2" class="w-full p-2 border rounded-lg text-sm mt-1" placeholder="Nội dung công việc..."></textarea></div>
-          <div><label class="text-xs text-gray-500 font-bold">完成期限</label><input type="datetime-local" id="f-deadline" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
-          <div><label class="text-xs text-gray-500 font-bold">交派參考照片</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1 text-xs mt-1"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">工作內容 (中文)</label><textarea id="f-taskzh" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="輸入具體交派任務..."></textarea></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">工作內容 (越文，選填)</label><textarea id="f-taskvi" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold" placeholder="Nội dung công việc..."></textarea></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">完成期限</label><input type="datetime-local" id="f-deadline" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs mt-1 font-semibold"></div>
+          <div><label class="text-[11px] text-slate-500 font-bold">交派參考照片</label><input type="file" id="f-photos" multiple accept="image/*" class="w-full p-1.5 text-xs mt-1 border border-slate-200 rounded-xl bg-slate-50"></div>
         `;
       }
     }
@@ -495,7 +631,7 @@
 
     async function submitCurrentForm() {
       const btn = document.getElementById("btn-submit-form");
-      btn.innerText = "資料送出中...";
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 上傳中...`;
       btn.disabled = true;
 
       try {
@@ -539,7 +675,6 @@
         const res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
         const json = await res.json();
         if (json.status === "success") {
-          alert("送出成功！已連動同步至交辦事項與推播。");
           closeFormModal();
           switchTab("tasks");
           loadTasks();
@@ -547,7 +682,7 @@
           alert("送出失敗：" + json.message);
         }
       } catch (err) {
-        alert("連線錯誤：" + err);
+        alert("連線異常：" + err);
       } finally {
         btn.innerText = "確認送出";
         btn.disabled = false;
@@ -555,12 +690,12 @@
     }
 
     function openWorkerReportModal(taskId) {
-      const rep = prompt("請輸入回報說明 (或直接點確認送出)：", "工作已完成");
+      const rep = prompt("請輸入回報說明：", "工作已完成");
       if (rep !== null) submitTaskStatus(taskId, rep, null);
     }
 
     function reviewTask(taskId, status) {
-      if (confirm(`確定要將此工單設為【${status}】嗎？`)) {
+      if (confirm(`確認將此工單設為【${status}】？`)) {
         submitTaskStatus(taskId, null, status);
       }
     }
@@ -584,7 +719,7 @@
       const resultsDiv = document.getElementById("search-results");
       if (!custId) return alert("請輸入客戶編號");
 
-      resultsDiv.innerHTML = `<div class="text-center py-4 text-xs text-gray-400">查詢中...</div>`;
+      resultsDiv.innerHTML = `<div class="text-center py-6 text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> 查詢中...</div>`;
       try {
         const res = await fetch(`${GAS_API_URL}?action=searchMaintenance&customerId=${encodeURIComponent(custId)}`);
         const json = await res.json();
@@ -592,23 +727,29 @@
         if (json.status === "success" && json.data.length > 0) {
           resultsDiv.innerHTML = "";
           json.data.forEach((r, idx) => {
+            let img = "";
+            if (r.photo1 && r.photo1.startsWith("http")) {
+              img = `<img src="${r.photo1}" class="w-full h-32 object-cover rounded-xl mt-2 cursor-pointer" onclick="openLightbox('${r.photo1}')">`;
+            }
+
             resultsDiv.innerHTML += `
-              <div class="border border-gray-200 rounded-lg p-3 bg-gray-50 text-xs space-y-1">
-                <div class="flex justify-between font-bold text-gray-700">
-                  <span>#${idx + 1} 📅 ${r.date}</span>
-                  <span class="text-blue-900">${r.customerId}</span>
+              <div class="border border-slate-200/80 rounded-2xl p-3.5 bg-slate-50 text-xs space-y-1.5 card-shadow">
+                <div class="flex justify-between font-bold text-slate-800">
+                  <span class="text-blue-700 font-extrabold">#${idx + 1} 📅 ${r.date}</span>
+                  <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-mono">${r.customerId}</span>
                 </div>
-                <div>👤 人員：${r.driver || "-"} / ${r.assistant || "-"}</div>
-                <div>🔧 項目：${r.record || "例行保養"} (${r.model || "-"} ${r.qty || 0}組)</div>
-                ${r.note ? `<div class="text-gray-500">📝 備註：${r.note}</div>` : ""}
+                <div class="text-slate-600">👤 執行人員：${r.driver || "-"} / ${r.assistant || "-"}</div>
+                <div class="text-slate-600">🔧 保養項目：${r.record || "例行保養"} (${r.model || "-"} ${r.qty || 0}組)</div>
+                ${r.note ? `<div class="text-slate-400 bg-white p-2 rounded-lg border border-slate-200/60 mt-1">📝 ${r.note}</div>` : ""}
+                ${img}
               </div>
             `;
           });
         } else {
-          resultsDiv.innerHTML = `<div class="text-center py-4 text-xs text-gray-400">查無客戶編號【${custId}】的保養紀錄</div>`;
+          resultsDiv.innerHTML = `<div class="text-center py-6 text-xs text-slate-400">查無客戶編號【${custId}】的保養紀錄</div>`;
         }
       } catch (e) {
-        resultsDiv.innerHTML = `<div class="text-center py-4 text-xs text-red-400">查詢失敗</div>`;
+        resultsDiv.innerHTML = `<div class="text-center py-6 text-xs text-rose-500">查詢失敗</div>`;
       }
     }
   </script>
