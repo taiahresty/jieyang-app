@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#1e3a8a">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -28,30 +29,30 @@
       <button onclick="toggleLanguage()" class="bg-blue-800 hover:bg-blue-700 text-xs px-2.5 py-1.5 rounded-lg border border-blue-600 transition font-medium" id="lang-btn">
         🇻🇳 Tiếng Việt
       </button>
-      <button onclick="logout()" class="text-xs bg-red-600 px-2 py-1.5 rounded-lg">登出</button>
+      <button onclick="logout()" class="text-xs bg-red-600 px-2.5 py-1.5 rounded-lg font-bold">登出</button>
     </div>
   </header>
 
   <!-- 登入畫面 -->
-  <div id="view-login" class="p-6 max-w-md mx-auto">
+  <div id="view-login" class="p-6 max-w-md mx-auto mt-6">
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center space-y-4">
       <div class="w-16 h-16 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">🏢</div>
-      <h2 class="text-xl font-bold">同仁身分登入</h2>
+      <h2 class="text-xl font-bold">公司系統登入</h2>
+      <p class="text-xs text-gray-500">請使用已登記於公司名冊的 Google 帳號登入</p>
       
-      <select id="emp-select" class="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 text-sm">
-        <option value="">載入員工名單中...</option>
-      </select>
-
-      <button onclick="loginUser()" class="w-full bg-blue-900 text-white py-3 rounded-xl font-bold text-base shadow active:bg-blue-800 transition">
-        進入系統
+      <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 py-3 rounded-xl font-bold text-sm text-gray-700 shadow-sm active:bg-gray-50">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+        <span>使用 Google 帳號登入</span>
       </button>
+
+      <div id="login-error" class="text-xs text-red-500 font-bold hidden"></div>
     </div>
   </div>
 
   <!-- 主要內容區 -->
   <main id="main-content" class="hidden p-4 max-w-lg mx-auto space-y-3">
 
-    <!-- 推播通知啟用提示橫幅 (若尚未取得 Token) -->
+    <!-- 啟用推播通知按鈕橫幅 (若尚未註冊 Token 則顯示) -->
     <div id="push-notice-banner" class="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-center justify-between shadow-sm">
       <div class="text-xs text-amber-800">
         <div class="font-bold">🔔 尚未啟用手機推播</div>
@@ -152,6 +153,7 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     let messaging = null;
     let swRegistration = null;
 
@@ -181,9 +183,7 @@
           if (firebase.messaging.isSupported()) {
             messaging = firebase.messaging();
           }
-        } catch (e) {
-          console.error("SW 註冊錯誤:", e);
-        }
+        } catch (e) { console.error("SW 註冊錯誤:", e); }
       }
       await fetchEmployees();
       if (currentUser) showMainApp();
@@ -218,25 +218,37 @@
         const json = await res.json();
         if (json.status === "success") {
           employeeList = json.data;
-          const select = document.getElementById("emp-select");
-          select.innerHTML = `<option value="">-- 請選擇同仁 --</option>`;
-          employeeList.forEach(e => {
-            const name = (currentLang === "vi" && e["員工姓名(越)"]) ? e["員工姓名(越)"] : e["員工姓名"];
-            select.innerHTML += `<option value="${e["員工編號Employee_ID"]}">${e["員工編號Employee_ID"]} - ${name} (${e["部門"]})</option>`;
-          });
         }
       } catch (err) { console.error("員工名單載入失敗", err); }
     }
 
-    function loginUser() {
-      const empId = document.getElementById("emp-select").value;
-      if (!empId) return alert("請先選擇身分");
-      const user = employeeList.find(e => e["員工編號Employee_ID"] === empId);
-      if (!user) return;
+    async function loginWithGoogle() {
+      const errBox = document.getElementById("login-error");
+      errBox.classList.add("hidden");
+      const provider = new firebase.auth.GoogleAuthProvider();
 
-      currentUser = user;
-      localStorage.setItem("app_user", JSON.stringify(currentUser));
-      showMainApp();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        const email = result.user.email.toLowerCase().trim();
+
+        if (employeeList.length === 0) await fetchEmployees();
+
+        const matched = employeeList.find(e => (e["電郵Email"] || "").toLowerCase().trim() === email);
+
+        if (!matched) {
+          errBox.innerText = `登入失敗：此 Google 帳號 (${email}) 未登記在公司員工名單中。`;
+          errBox.classList.remove("hidden");
+          auth.signOut();
+          return;
+        }
+
+        currentUser = matched;
+        localStorage.setItem("app_user", JSON.stringify(currentUser));
+        showMainApp();
+      } catch (err) {
+        errBox.innerText = "登入失敗：" + err.message;
+        errBox.classList.remove("hidden");
+      }
     }
 
     function showMainApp() {
@@ -251,21 +263,26 @@
         document.getElementById("manager-create-box").classList.remove("hidden");
       }
 
+      // 若已有 Token 則隱藏啟用橫幅
+      if (currentUser["FCM_Token"]) {
+        document.getElementById("push-notice-banner").classList.add("hidden");
+      }
+
       loadTasks();
     }
 
     function logout() {
       if (confirm("確定要登出嗎？")) {
+        auth.signOut();
         localStorage.removeItem("app_user");
         currentUser = null;
         location.reload();
       }
     }
 
-    // 手動觸發推播授權與 Token 註冊
     async function requestPushPermissionManually() {
       if (!messaging || !swRegistration) {
-        return alert("此手機瀏覽器環境不支援或未以 HTTPS 開啟。");
+        return alert("此手機環境尚未就緒，請先確認使用 Chrome / Safari 開啟。");
       }
       try {
         const permission = await Notification.requestPermission();
@@ -276,15 +293,14 @@
           });
           if (token) {
             document.getElementById("push-notice-banner").classList.add("hidden");
-            // 送回 GAS 寫入 K 欄
             await fetch(GAS_API_URL, {
               method: "POST",
               body: JSON.stringify({ action: "updateToken", empId: currentUser["員工編號Employee_ID"], token: token })
             });
-            alert("🎉 推播通知已成功啟用！此手機已綁定系統聲響提醒。");
+            alert("🎉 推播通知啟用成功！此手機已綁定系統工單聲響。");
           }
         } else {
-          alert("您拒絕了通知權限，將無法收到即時工單提醒。");
+          alert("您已封鎖通知權限，請至手機設定中允許瀏覽器發送通知。");
         }
       } catch (err) {
         alert("啟用推播失敗: " + err.message);
@@ -316,9 +332,9 @@
             const statusColor = t["工作狀態"] === "已完成" ? "bg-green-100 text-green-700" : (t["工作狀態"] === "待主管審核" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700");
 
             let imgHtml = "";
-            const rawImg = t["清單顯示照片"] || t["交派照片1"] || t["照片1"];
+            const rawImg = (t["清單顯示照片"] || t["交派照片1"] || t["照片1"] || "").toString().trim();
             if (rawImg && (rawImg.startsWith("http://") || rawImg.startsWith("https://") || rawImg.startsWith("data:image"))) {
-              imgHtml = `<img src="${rawImg}" class="w-full h-36 object-cover rounded-lg mt-1 border">`;
+              imgHtml = `<img src="${rawImg}" class="w-full h-40 object-cover rounded-lg mt-2 border">`;
             }
 
             let card = `
@@ -361,7 +377,7 @@
           container.innerHTML = `<div class="text-center py-8 text-sm text-gray-400">目前沒有交辦工單</div>`;
         }
       } catch (e) {
-        container.innerHTML = `<div class="text-center py-8 text-sm text-red-400">載入失敗，請點右上角重新整理</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-sm text-red-400">載入失敗，請重新整理</div>`;
       }
     }
 
